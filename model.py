@@ -9,6 +9,17 @@ default_params = {
     "starvation_time": 14
 }
 
+def generate_temperature(mean_temperature, day):
+    day = day % 365
+    year_cycle = 4 * np.cos((np.random.uniform(-20, 20) + day) * 2 * np.pi / 365)
+    season_cycle = 2 * np.cos(4 * (np.random.uniform(-20, 20) + day) * 2 * np.pi / 365)
+    month_cycle = 1 * np.cos(12 * (np.random.uniform(-5, 5) + day) * 2 * np.pi / 365)
+    daily_variation = np.random.normal(0, 0.5)
+    #daily_variation = 0
+
+    temperature = mean_temperature + (year_cycle + season_cycle + month_cycle) / 3 + daily_variation
+
+    return temperature
 
 class Coral(object):
 
@@ -32,11 +43,14 @@ class Coral(object):
             self.sym_load = 0
             self.time_without_symbiont += 1
 
-    def coral_health(self):
-        if self.sym_load < 1:
-            self.health =  1 - self.time_without_symbiont / self.starvation_time
-        return self.health
 
+    def compute_coral_health(self, temperature):
+        ros_output = self.symbiont.calculate_ros_production(temperature)
+        if ros_output > self.ros_tolerance:
+            self.sym_load = self.ros_tolerance / ros_output
+        self.health += 2 * self.sym_load / self.starvation_time - 1.9 / self.starvation_time
+
+        return self.health
 
 
 
@@ -53,19 +67,15 @@ class Symbiont(object):
                                 (temperature - self.sensitivity_center)) + 1)
         return ros_output
 
+
 def step(coral, temperature):
     if coral.is_living == True:
-        ros_concentration = coral.symbiont.calculate_ros_production(temperature)
-
-        if ros_concentration >= coral.ros_tolerance:
-            coral.sym_load = 0
-            coral.health -= 1 / coral.starvation_time
+        coral.health = coral.compute_coral_health(temperature)
+        if coral.health > 1:
+            coral.health = 1
+        if coral.health < 0.9 and coral.health > 0:
             new_symbiont = Symbiont()
             coral.symbiont = new_symbiont
-
-        if ros_concentration < coral.ros_tolerance:
-            if coral.health < 1:
-                coral.health += 1 / coral.starvation_time
 
         if coral.health <= 0:
             coral.health = 0
@@ -73,29 +83,9 @@ def step(coral, temperature):
 
 
 
-def generate_temperature(mean_temperature, day):
-    day = day % 365
-    year_cycle = 4 * np.cos((np.random.uniform(-20, 20) + day) * 2 * np.pi / 365)
-    season_cycle = 2 * np.cos(4 * (np.random.uniform(-20, 20) + day) * 2 * np.pi / 365)
-    month_cycle = 1 * np.cos(12 * (np.random.uniform(-5, 5) + day) * 2 * np.pi / 365)
-    daily_variation = np.random.normal(0, 0.5)
-    #daily_variation = 0
 
-    temperature = mean_temperature + (year_cycle + season_cycle + month_cycle) / 3 + daily_variation
 
-    return temperature
 
-temps = []
-random_start = np.random.randint(100, 100000)
-for day in range(random_start, random_start + 365 * 2):
-    temps.append(generate_temperature(29, day))
-plt.figure(figsize=(8,6))
-plt.plot(temps, linewidth=1)
-plt.title("Temperature - Mean of 29")
-plt.xlabel('Day')
-plt.ylabel('Temperature')
-plt.savefig("Example Temperature Plot - 2 Years.png", bbox_inches="tight", dpi=200)
-plt.show()
 
 
 test_sym = Symbiont()
@@ -105,6 +95,7 @@ test_coral.health = 1
 
 history_health = []
 history_temp = []
+history_sym = []
 day = np.random.randint(100000)
 for i in range(1000):
     day += 1
@@ -112,6 +103,7 @@ for i in range(1000):
     history_temp.append(temperature)
     step(test_coral, temperature)
     history_health.append(test_coral.health)
+    history_sym.append(test_coral.sym_load)
 
 plt.plot(history_health)
 plt.title('Health')
@@ -119,6 +111,9 @@ plt.ylim([0, 1.1])
 plt.show()
 plt.plot(history_temp, c='r')
 plt.title('Temperature')
+plt.show()
+plt.plot(history_sym, c='r')
+plt.title('Symbiont Load')
 plt.show()
 
 
@@ -148,4 +143,18 @@ plt.show()
 
 plt.hist([coral.symbiont.calculate_ros_production(30) for coral in corals], 35)
 plt.title("Symbiont Population ROS Production at 30°C")
+plt.show()
+
+
+
+temps = []
+random_start = np.random.randint(100, 100000)
+for day in range(random_start, random_start + 365 * 2):
+    temps.append(generate_temperature(29, day))
+plt.figure(figsize=(8,6))
+plt.plot(temps, linewidth=1)
+plt.title("Temperature - Mean of 29")
+plt.xlabel('Day')
+plt.ylabel('Temperature')
+#plt.savefig("Example Temperature Plot - 2 Years.png", bbox_inches="tight", dpi=200)
 plt.show()
