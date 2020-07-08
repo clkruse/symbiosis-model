@@ -1,0 +1,61 @@
+--------------------------------------------
+
+July 6, 2020
+
+I made a major revision to the symbiont temperature response curve. I realized that a sigmoidal response was not physiologically plausible. Instead, it should be exponential.
+
+When running the population model, I see the following results.
+Notes: 
+I define critical temperature as the point where symbiont ROS production exceeds the coral's ROS threshold.
+Bleaching threshold is defined as the symbiont load where a coral replaces its symbiont.
+
+Critical temperatures of , Survival Rates:
+Coral population of 1000, 10000 timesteps
+
+Model Runs at Bleaching threshold of 0.2
+ - 32.68, 47.7%
+ - 32.66, 48.9%
+ - 32.71, 46.9%
+ - 32.67, 44.4%
+
+Model Runs at Bleaching threshold of 0.9
+ - 33.11, 32.4%
+ - 33.22, 25.5%
+ - 33.13, 36.5%
+ - 33.39, 27.5%
+
+Model Runs at Bleaching threshold of 0.5
+ - 32.52, 48.8%
+ - 32.71, 45.5%
+ - 32.50, 51.1%
+ - 33.10, 28.2%
+ - 32.70, 45.7%
+
+Model Runs at Bleaching threshold of 0
+ - 32.50, 49.4%
+ - 32.83, 44.9%
+ - 33.07, 40.4%
+ - 32.84, 39.2%
+
+Model Runs at Bleaching threshold of 1
+ - 31.34, 25.8%
+ - 33.36, 29.5%
+ - 33.12, 32.6%
+ - 33.87, 18.7%
+
+
+I'm not sure what to make of these results. I do see that making a high bleaching threshold (closer to 1) does select for a higher critical temperature. However, survival rate goes down.
+
+--------------------------------------------
+
+July 7, 2020
+
+I'm thinking that the appropriate threshold for expelling a symbiont is at the critical temperature rather than some arbitrarily defined threshold. It would imply that a coral expels its symbiont as soon as it starts causing the host harm, rather than at some arbitrary threshold.
+
+I also did some preliminary tests comparing survival rates with and without symbiont expulsion. Early results seem promising, though I need to do a full run and to validate.
+
+TODO:
+I noticed that there are a number of parameters assigned to the coral class that should be attributes of the coral population as a whole. For example, starvation time.
+
+I also realized that starvation time is not an appropriate term, and that the parameters of the health function should live with the attributes of the coral population rather than in the model step function. 
+
